@@ -1,59 +1,43 @@
-# Ribbon Snippets
+# Ribbon Snippets · Snippet panel fork
 
-Define text blocks and assign each to a ribbon button for one-click insertion into your notes.
+An Obsidian plugin for inserting reusable text from a dockable, searchable panel.
+Based on [mriechers/obsidian-ribbon-snippets](https://github.com/mriechers/obsidian-ribbon-snippets), under the original MIT license.
 
-![Settings UI](https://raw.githubusercontent.com/markonfire/obsidian-ribbon-snippets/main/.github/screenshot-settings.png)
+**[中文安装与使用说明](DEVELOPMENT.zh-CN.md)**
 
 ## Features
 
-- **Multiple snippets** — create as many as you need, each with its own ribbon icon
-- **Lucide icon picker** — choose any [Lucide icon](https://lucide.dev) for each button (with live preview)
-- **Insert positions** — top of note (after frontmatter), at cursor, or bottom of note
-- **Duplicate detection** — optionally skip insertion if the snippet's first line already exists in the note
-- **Command palette** — every snippet is also available as a command (`Insert: <name>`)
-- **Reorder and manage** — move snippets up/down or delete them from settings
-- **Dynamic lifecycle** — adding or removing snippets updates the ribbon and command palette immediately (no reload needed)
+- Dockable snippet panel: drag its tab into the left sidebar, right sidebar, or another workspace split.
+- Three layouts: compact wrapping labels, a vertical list, or a horizontal scrolling row.
+- Always-visible titles, optional icons (off by default), and per-snippet background colors.
+- Searchable icon picker with previews, populated from the icons supported by the running Obsidian version.
+- Compact settings list with search, reordering, and separate edit dialogs. Changes are applied only on Save.
+- Insert at the cursor, at the top after frontmatter, or at the bottom. Existing snippets retain their settings.
+- Optional duplicate detection and per-snippet command palette entries.
+- Optional legacy ribbon buttons. By default, the ribbon contains only the panel opener.
 
-## Use cases
+## Manual installation
 
-- Insert a [Tasks plugin](https://publish.obsidian.md/tasks) query block with one click
-- Stamp a standard template section into any note
-- Add boilerplate frontmatter, callouts, or code blocks
-- Quick-insert recurring checklists or status headers
+This is a local development fork, not an official upstream release. It retains the `ribbon-snippets` plugin ID to reuse existing configuration.
 
-## Installation
+1. Back up `<vault>/.obsidian/plugins/ribbon-snippets/`, especially `data.json`.
+2. Disable the plugin and copy the built `main.js`, `manifest.json`, and `styles.css` into that directory. Keep `data.json`.
+3. Enable the plugin and click the ribbon's panel opener, or run the **打开片段面板** command.
+4. Open a note in editing mode, then click a snippet title. The panel displays the target note's name.
 
-### From community plugins (recommended)
+Settings and panel labels in this fork use Simplified Chinese. Requires Obsidian 1.7.2 or later.
 
-1. Open **Settings > Community plugins**
-2. Click **Browse** and search for **Ribbon Snippets**
-3. Click **Install**, then **Enable**
+## Development
 
-### Manual install
+```sh
+npm ci
+npm run typecheck
+npm test
+npm run build
+```
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/markonfire/obsidian-ribbon-snippets/releases/latest)
-2. Create a folder: `<vault>/.obsidian/plugins/ribbon-snippets/`
-3. Copy the three files into that folder
-4. Reload Obsidian and enable the plugin in **Settings > Community plugins**
-
-## Usage
-
-1. Go to **Settings > Ribbon Snippets**
-2. Click **+ New snippet**
-3. Configure:
-   - **Name** — tooltip for the ribbon button and command palette label
-   - **Icon** — any Lucide icon name (e.g. `check-circle`, `star`, `bookmark`)
-   - **Insert position** — top of note (after frontmatter), at cursor, or bottom
-   - **Prevent duplicates** — skip if the first line already appears in the note
-   - **Content** — the markdown text to insert
-4. A ribbon icon appears immediately. Click it to insert the snippet into the active note.
-
-## Compatibility
-
-Requires **Obsidian 1.7.2** or later (uses the `removeCommand()` API for dynamic command lifecycle management).
-
-Works on desktop and mobile.
+Tests use a simulated Obsidian API and DOM. Native docking, workspace restore, and mobile touch interaction require manual testing in Obsidian.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Original author: Mark Riechers.

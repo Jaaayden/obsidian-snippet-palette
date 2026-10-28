@@ -1,80 +1,42 @@
-/* Ribbon Snippets - Settings UI */
-
-.ribbon-snippet-item {
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
+/* All colors follow Obsidian's theme palette; titles remain visible in every layout. */
+.ribbon-snippets-panel { padding: 12px; }
+.ribbon-snippets-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ribbon-snippets-toolbar input { flex: 1; min-width: 0; width: 100%; }
+.ribbon-snippets-target { font-size: var(--font-ui-smaller); color: var(--text-muted); margin-bottom: 12px; overflow-wrap: anywhere; }
+.ribbon-snippets-list { display: flex; gap: 8px; align-items: flex-start; }
+.ribbon-snippets-layout-wrap { flex-wrap: wrap; }
+.ribbon-snippets-layout-column { flex-direction: column; align-items: stretch; }
+.ribbon-snippets-layout-row { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 10px; }
+.ribbon-snippets-layout-row .ribbon-snippets-chip { flex-shrink: 0; max-width: none; white-space: nowrap; }
+button.ribbon-snippets-chip {
+  display: inline-flex; align-items: center; justify-content: flex-start; gap: 6px;
+  height: auto; min-height: 32px; max-width: 100%; padding: 5px 10px;
+  border: 1px solid rgba(var(--ribbon-snippet-rgb), 0.28); border-radius: 7px;
+  background: rgba(var(--ribbon-snippet-rgb), 0.12); color: var(--text-normal);
+  box-shadow: none; text-align: left; white-space: normal; overflow-wrap: anywhere;
+  font-size: var(--font-ui-small); line-height: 1.5; cursor: pointer;
 }
-
-.ribbon-snippet-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.ribbon-snippet-header-icon {
-  display: flex;
-  align-items: center;
-  color: var(--text-accent);
-}
-
-.ribbon-snippet-header-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.ribbon-snippet-header-name {
-  font-weight: 600;
-  font-size: var(--font-ui-medium);
-}
-
-.ribbon-snippet-icon-preview {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-left: 8px;
-  border-radius: 4px;
-  background: var(--background-modifier-hover);
-}
-
-.ribbon-snippet-icon-preview svg {
-  width: 18px;
-  height: 18px;
-}
-
-.ribbon-snippet-textarea {
-  width: 100% !important;
-  min-height: 120px;
-  font-family: var(--font-monospace);
-  font-size: var(--font-ui-small);
-}
-
-.ribbon-snippet-actions .setting-item-control {
-  gap: 4px;
-}
-
-.ribbon-snippet-btn-disabled {
-  opacity: 0.3;
-}
-
-.ribbon-snippets-empty {
-  color: var(--text-muted);
-  font-style: italic;
-  text-align: center;
-  padding: 24px 0;
-}
-
-.ribbon-snippets-hint {
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
-  margin-top: 16px;
-  padding: 8px 12px;
-  background: var(--background-modifier-hover);
-  border-radius: 4px;
+button.ribbon-snippets-chip:hover { background: rgba(var(--ribbon-snippet-rgb), 0.23); }
+button.ribbon-snippets-chip:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.ribbon-snippets-chip > span:last-child { min-width: 0; }
+.ribbon-snippets-color-neutral { --ribbon-snippet-rgb: var(--mono-rgb-100); }
+.ribbon-snippets-color-blue { --ribbon-snippet-rgb: var(--color-blue-rgb); }
+.ribbon-snippets-color-green { --ribbon-snippet-rgb: var(--color-green-rgb); }
+.ribbon-snippets-color-orange { --ribbon-snippet-rgb: var(--color-orange-rgb); }
+.ribbon-snippets-color-pink { --ribbon-snippet-rgb: var(--color-pink-rgb); }
+.ribbon-snippets-color-purple { --ribbon-snippet-rgb: var(--color-purple-rgb); }
+.ribbon-snippets-icon { display: inline-flex; align-items: center; flex-shrink: 0; }
+.ribbon-snippets-icon svg { width: 17px; height: 17px; }
+.ribbon-snippets-icon-option { display: flex; align-items: center; gap: 10px; }
+.ribbon-snippets-setting-row { padding: 10px 0; }
+.ribbon-snippets-setting-row .setting-item-info { min-width: 0; }
+.ribbon-snippets-setting-row .setting-item-description { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.ribbon-snippets-setting-row .setting-item-control { gap: 6px; flex-shrink: 0; }
+.ribbon-snippets-content-setting { flex-direction: column; align-items: stretch; gap: 10px; }
+.ribbon-snippets-content-setting .setting-item-control { width: 100%; }
+.ribbon-snippet-textarea { width: 100%; min-height: 160px; resize: vertical; font-family: var(--font-monospace); }
+.ribbon-snippets-editor .setting-item-description { max-width: 30em; }
+.ribbon-snippets-empty { color: var(--text-muted); padding: 16px 0; }
+@media (max-width: 420px) {
+  .ribbon-snippets-setting-row { flex-wrap: wrap; gap: 8px; }
 }
