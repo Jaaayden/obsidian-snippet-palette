@@ -106,7 +106,10 @@ export class SnippetPaletteSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 		containerEl.addClass('snippet-palette-settings');
-		containerEl.createEl('h2', { text: t('settingsTitle') });
+		const header = containerEl.createDiv({ cls: 'snippet-palette-settings-header' });
+		header.createEl('h2', { text: t('settingsTitle') });
+		const version = header.createSpan({ text: `v${this.plugin.manifest.version}`, cls: 'snippet-palette-version' });
+		version.setAttribute('aria-label', t('version', { version: this.plugin.manifest.version }));
 		new Setting(containerEl).setName(t('panel')).setDesc(t('panelDesc'))
 			.addButton(button => button.setButtonText(t('open')).onClick(() => this.plugin.openPanel()));
 		new Setting(containerEl).setName(t('layout')).addDropdown(dropdown => dropdown
