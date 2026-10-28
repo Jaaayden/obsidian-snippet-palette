@@ -74,3 +74,15 @@ button.snippet-palette-chip:focus-visible { outline: 2px solid var(--interactive
 .snippet-palette-settings button.snippet-palette-tool:disabled { opacity: 0.25; cursor: default; }
 .snippet-palette-settings button:focus-visible,
 .snippet-palette-panel button:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 1px; }
+
+.snippet-palette-settings .snippet-palette-setting-row { position: relative; }
+.snippet-palette-settings button.snippet-palette-drag-handle { cursor: grab; width: 22px; padding: 3px; }
+.snippet-palette-settings button.snippet-palette-drag-handle:active { cursor: grabbing; }
+.snippet-palette-setting-row.is-dragging { opacity: 0.45; }
+.snippet-palette-setting-row.drop-before::before,
+.snippet-palette-setting-row.drop-after::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 2px;
+  background: var(--interactive-accent); border-radius: 1px; pointer-events: none;
+}
+.snippet-palette-setting-row.drop-before::before { top: -1px; }
+.snippet-palette-setting-row.drop-after::after { bottom: -1px; }

@@ -9,7 +9,7 @@ A compact, colorful palette for reusable text in Obsidian.
 - A dockable panel with wrapping labels, a vertical list, or a horizontal scrolling row.
 - Always-visible titles, optional icons, and per-snippet colors.
 - Search hidden by default: click the search icon to expand it; click again or press Escape to close and clear the filter.
-- A compact single-line settings list with color dots, search, reordering, and separate edit dialogs.
+- A compact single-line settings list with color dots, search, drag handles, and separate edit dialogs. Drag to insert before or after any row; focus a handle and use Home/End to move directly to the first/last position.
 - A searchable icon picker using the icons actually supported by your Obsidian version.
 - Insert at the cursor, after frontmatter, or at the bottom, with optional duplicate detection.
 - English and Simplified Chinese UI following Obsidian's language setting; other languages fall back to English.

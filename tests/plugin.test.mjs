@@ -84,7 +84,7 @@ const obsidian = {
   setIcon: (el, name) => { if (icons.includes(name)) el.createEl('svg'); }
 };
 const bundled = await build({ stdin: {
-  contents: "export {default as Plugin} from './src/main'; export * from './src/model'; export * from './src/view'; export * from './src/settings'; export * from './src/i18n';",
+  contents: "export {default as Plugin} from './src/main'; export * from './src/model'; export * from './src/view'; export * from './src/settings'; export * from './src/i18n'; export * from './src/reorder';",
   resolveDir: process.cwd(), loader: 'ts'
 }, bundle: true, write: false, format: 'cjs', external: ['obsidian'] });
 const module = { exports: {} };
@@ -256,7 +256,7 @@ test('settings list uses independent single-line rows without content previews',
   assert.equal(row.classList.contains('setting-item'), false);
   assert.equal(row.querySelector('.snippet-palette-row-title').textContent, '示例');
   assert.equal(row.textContent.includes('Private body'), false);
-  assert.equal(row.querySelectorAll('.snippet-palette-tool').length, 4);
+  assert.equal(row.querySelectorAll('.snippet-palette-row-actions .snippet-palette-tool').length, 4);
   assert.ok(tab.containerEl.querySelector('.snippet-palette-manage-toolbar input[type=search]'));
 });
 
@@ -281,4 +281,70 @@ test('English locale covers settings, modal, panel, command and notices', async 
     await plugin.saveSettings(); assert.equal(plugin.commands.get('insert-snippet-one').name, 'Insert: 示例');
     plugin.insertSnippet('one'); assert.equal(notices.at(-1), 'Inserted “示例”');
   } finally { language = 'zh'; }
+});
+
+test('reordering moves last to first and first to last without mutating input', () => {
+  const items = Array.from({ length: 30 }, (_, i) => snippet({ id: String(i) }));
+  const first = api.reorderSnippets(items, '29', '0', false);
+  assert.equal(first[0].id, '29'); assert.equal(first.length, 30); assert.equal(items[0].id, '0');
+  const last = api.reorderSnippets(first, '29', '28', true);
+  assert.deepEqual(Array.from(last, item => item.id), items.map(item => item.id));
+  assert.equal(api.reorderSnippets(items, '0', '0', false), items);
+  assert.equal(api.reorderSnippets(items, 'missing', '0', false), items);
+  assert.equal(api.reorderSnippets(items, '0', '1', false), items);
+});
+
+function dragEvent(el, type, clientY = 0) {
+  const event = new dom.window.Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperties(event, {
+    clientY: { value: clientY },
+    dataTransfer: { value: { setData() {}, setDragImage() {} } }
+  });
+  el.dispatchEvent(event); return event;
+}
+function reorderFixture() {
+  const setup = fixture([
+    snippet({ id: 'a', name: 'Visible A' }),
+    snippet({ id: 'b', name: 'Hidden B' }),
+    snippet({ id: 'c', name: 'Visible C' })
+  ]);
+  const tab = new api.SnippetPaletteSettingTab(setup.app, setup.plugin); tab.display();
+  const row = id => tab.containerEl.querySelector(`[data-snippet-id="${id}"]`);
+  return { ...setup, tab, row };
+}
+
+test('dragging by handle shows drop position and persists filtered order', async () => {
+  const { plugin, tab, row } = reorderFixture();
+  const search = tab.containerEl.querySelector('.snippet-palette-manage-toolbar input');
+  search.value = 'Visible'; search.dispatchEvent(new dom.window.Event('input'));
+  assert.equal(row('b'), null);
+  row('a').getBoundingClientRect = () => ({ top: 0, height: 40 });
+  dragEvent(row('c').querySelector('.snippet-palette-drag-handle'), 'dragstart');
+  dragEvent(row('a'), 'dragover', 5); assert.equal(row('a').classList.contains('drop-before'), true);
+  dragEvent(row('a'), 'drop', 5); await tick();
+  assert.deepEqual(Array.from(plugin.saved.snippets, item => item.id), ['c', 'a', 'b']);
+  assert.equal(search.value, 'Visible'); assert.equal(row('b'), null);
+  assert.equal(tab.containerEl.querySelectorAll('.drop-before, .is-dragging').length, 0);
+});
+
+test('external and canceled drags do not change order; drop after works', async () => {
+  const { plugin, row } = reorderFixture();
+  dragEvent(row('a'), 'drop'); assert.equal(plugin.saved, undefined);
+  const handle = row('a').querySelector('.snippet-palette-drag-handle');
+  dragEvent(handle, 'dragstart'); dragEvent(handle, 'dragend'); dragEvent(row('c'), 'drop');
+  assert.equal(plugin.saved, undefined);
+  dragEvent(handle, 'dragstart'); dragEvent(row('c'), 'drop', 1); await tick();
+  assert.deepEqual(Array.from(plugin.saved.snippets, item => item.id), ['b', 'c', 'a']);
+});
+
+test('keyboard Home/End move directly and failed saves restore order', async () => {
+  const { plugin, tab, row } = reorderFixture(); document.body.append(tab.containerEl);
+  row('c').querySelector('.snippet-palette-drag-handle').dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Home' }));
+  await tick(); assert.equal(plugin.saved.snippets[0].id, 'c');
+  assert.equal(document.activeElement, row('c').querySelector('.snippet-palette-drag-handle'));
+  plugin.saveData = async () => { throw Error('disk full'); };
+  row('c').querySelector('.snippet-palette-drag-handle').dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'End' }));
+  await tick(); assert.equal(plugin.settings.snippets[0].id, 'c');
+  assert.equal(tab.containerEl.querySelector('.snippet-palette-setting-row').dataset.snippetId, 'c');
+  tab.containerEl.remove();
 });

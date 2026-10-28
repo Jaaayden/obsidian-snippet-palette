@@ -1,3 +1,4 @@
+import { reorderSnippets } from './reorder';
 import { t } from './i18n';
 import { App, Modal, Notice, PluginSettingTab, Setting, SuggestModal, getIconIds, getIcon, setIcon } from 'obsidian';
 import type SnippetPalettePlugin from './main';
@@ -129,7 +130,27 @@ export class SnippetPaletteSettingTab extends PluginSettingTab {
 		const add = toolbar.createEl('button', { text: t('newSnippet'), cls: 'mod-cta' });
 		add.addEventListener('click', () => new SnippetEditorModal(this.app, this.plugin, null, () => this.display()).open());
 		const list = containerEl.createDiv({ cls: 'snippet-palette-settings-list' });
+		let draggedId: string | null = null;
+		let savingOrder = false;
+		const clearDrag = () => {
+			draggedId = null;
+			list.querySelectorAll('.is-dragging, .drop-before, .drop-after').forEach(el => {
+				el.classList.remove('is-dragging', 'drop-before', 'drop-after');
+			});
+		};
+		const move = async (sourceId: string, targetId: string, after: boolean) => {
+			if (savingOrder) return;
+			const previous = this.plugin.settings.snippets;
+			const reordered = reorderSnippets(previous, sourceId, targetId, after);
+			if (reordered === previous) return;
+			savingOrder = true;
+			this.plugin.settings.snippets = reordered;
+			try { await this.plugin.saveSettings(); }
+			catch { this.plugin.settings.snippets = previous; }
+			finally { savingOrder = false; renderList(search.value); }
+		};
 		const renderList = (query: string) => {
+			clearDrag();
 			list.empty();
 			const snippets = this.plugin.settings.snippets;
 			let count = 0;
@@ -138,6 +159,56 @@ export class SnippetPaletteSettingTab extends PluginSettingTab {
 				count++;
 				// Custom rows avoid themes turning each Setting into a spacious card.
 				const row = list.createDiv({ cls: 'snippet-palette-setting-row' });
+				row.dataset.snippetId = snippet.id;
+				const handle = row.createEl('button', { cls: 'snippet-palette-tool snippet-palette-drag-handle' });
+				handle.draggable = true;
+				handle.title = t('dragToReorder');
+				handle.setAttribute('aria-label', t('reorderSnippet', { name: snippet.name || t('unnamed') }));
+				setIcon(handle, 'grip-vertical');
+				handle.addEventListener('dragstart', event => {
+					if (savingOrder || !event.dataTransfer) { event.preventDefault(); return; }
+					draggedId = snippet.id;
+					event.dataTransfer.effectAllowed = 'move';
+					event.dataTransfer.setData('text/plain', snippet.id);
+					event.dataTransfer.setDragImage(row, 16, row.offsetHeight / 2);
+					row.classList.add('is-dragging');
+				});
+				handle.addEventListener('dragend', clearDrag);
+				handle.addEventListener('keydown', async event => {
+					const items = this.plugin.settings.snippets;
+					const current = items.findIndex(item => item.id === snippet.id);
+					let destination: number;
+					if (event.key === 'Home') destination = 0;
+					else if (event.key === 'End') destination = items.length - 1;
+					else if (event.key === 'ArrowUp') destination = current - 1;
+					else if (event.key === 'ArrowDown') destination = current + 1;
+					else return;
+					event.preventDefault();
+					if (!items[destination]) return;
+					await move(snippet.id, items[destination].id, destination > current);
+					const moved = Array.from(list.children).find(el => (el as HTMLElement).dataset.snippetId === snippet.id);
+					(moved?.querySelector('.snippet-palette-drag-handle') as HTMLElement | null)?.focus();
+				});
+				row.addEventListener('dragover', event => {
+					if (!draggedId || savingOrder) return;
+					event.preventDefault();
+					if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+					list.querySelectorAll('.drop-before, .drop-after').forEach(el => el.classList.remove('drop-before', 'drop-after'));
+					if (draggedId === snippet.id) return;
+					const bounds = row.getBoundingClientRect();
+					row.classList.add(event.clientY < bounds.top + bounds.height / 2 ? 'drop-before' : 'drop-after');
+				});
+				row.addEventListener('dragleave', event => {
+					if (!event.relatedTarget || !row.contains(event.relatedTarget as Node)) row.classList.remove('drop-before', 'drop-after');
+				});
+				row.addEventListener('drop', event => {
+					if (!draggedId || savingOrder) return;
+					event.preventDefault();
+					const sourceId = draggedId;
+					const bounds = row.getBoundingClientRect();
+					clearDrag();
+					void move(sourceId, snippet.id, event.clientY >= bounds.top + bounds.height / 2);
+				});
 				const title = row.createEl('button', {
 					text: snippet.name || t('unnamed'),
 					cls: `snippet-palette-row-title snippet-palette-color-${snippetColor(snippet, index)}`
@@ -155,8 +226,7 @@ export class SnippetPaletteSettingTab extends PluginSettingTab {
 				};
 				for (const [offset, icon, label] of [[-1, 'arrow-up', t('moveUp')], [1, 'arrow-down', t('moveDown')]] as const) {
 					action(icon, label, index + offset < 0 || index + offset >= snippets.length, async () => {
-						[snippets[index], snippets[index + offset]] = [snippets[index + offset], snippets[index]];
-						await this.plugin.saveSettings(); renderList(query);
+						await move(snippet.id, snippets[index + offset].id, offset > 0);
 					});
 				}
 				action('pencil', t('edit'), false, () => {

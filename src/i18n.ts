@@ -1,6 +1,8 @@
 import { getLanguage } from 'obsidian';
 
 export const en = {
+  "dragToReorder": "Drag to reorder. Keyboard: ↑/↓ to move, Home/End for first/last.",
+  "reorderSnippet": "Reorder {name}. Use arrow keys or Home/End.",
   "openPanel": "Open snippet panel",
   "unnamed": "Untitled snippet",
   "saveFailed": "Could not save snippets. Please try again.",
@@ -70,6 +72,8 @@ export const en = {
 } as const;
 export type TranslationKey = keyof typeof en;
 export const zh: Record<TranslationKey, string> = {
+  "dragToReorder": "拖动调整顺序；键盘 ↑/↓ 移动，Home/End 置顶或置底。",
+  "reorderSnippet": "调整「{name}」顺序：方向键移动，Home/End 置顶或置底。",
   "openPanel": "打开片段面板",
   "unnamed": "未命名片段",
   "saveFailed": "片段设置保存失败，请重试。",
