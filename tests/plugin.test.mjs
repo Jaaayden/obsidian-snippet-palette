@@ -23,6 +23,7 @@ Object.assign(HTMLElement.prototype, {
 });
 const notices = [];
 class Plugin {
+  manifest = { version: '1.1.0' };
   commands = new Map(); ribbons = [];
   constructor(app) { this.app = app; }
   addCommand(command) { this.commands.set(command.id, command); }
@@ -347,4 +348,19 @@ test('keyboard Home/End move directly and failed saves restore order', async () 
   await tick(); assert.equal(plugin.settings.snippets[0].id, 'c');
   assert.equal(tab.containerEl.querySelector('.snippet-palette-setting-row').dataset.snippetId, 'c');
   tab.containerEl.remove();
+});
+
+
+test('settings shows installed manifest version in both languages', () => {
+  const { plugin, app } = fixture();
+  plugin.manifest.version = '9.8.7';
+  const tab = new api.SnippetPaletteSettingTab(app, plugin);
+  for (const [locale, label] of [['zh', '版本 9.8.7'], ['en', 'Version 9.8.7']]) {
+    language = locale;
+    tab.display();
+    const version = tab.containerEl.querySelector('.snippet-palette-version');
+    assert.equal(version.textContent, 'v9.8.7');
+    assert.equal(version.getAttribute('aria-label'), label);
+  }
+  language = 'zh';
 });
