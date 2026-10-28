@@ -38,6 +38,6 @@ npm run build
 
 ## CI 与发布
 
-开发环境要求 Node 22 或更高版本。PR 和 main 使用同一套检查：Linux 上 Node 22/24/26，macOS、Windows 上 Node 24；验证元数据、锁文件、类型、测试和构建。Linux / Node 24 上传可下载的插件安装产物，保留 14 天。`npm run package` 在本地生成 `artifacts/snippet-palette/`。
+开发环境要求 Node 22 或更高版本。PR 和 main 使用同一套检查：Linux 上 Node 22/24/26，macOS 15 Intel、Windows 上 Node 24；验证元数据、锁文件、类型、测试和构建。Linux / Node 24 上传可下载的插件安装产物，保留 14 天。`npm run package` 在本地生成 `artifacts/snippet-palette/`。
 
 只有推送版本标签才会发布 Release。标签必须与 manifest、package、锁文件以及 versions.json 中的版本一致，并通过完整 CI；发布任务直接使用已验证的产物。普通提交不触发发布。

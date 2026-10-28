@@ -54,7 +54,7 @@ Developed by [Jayden](https://github.com/Jaaayden), based on [Ribbon Snippets by
 
 ## Continuous integration
 
-Pull requests and `main` run the same reusable checks on Linux (Node 22, 24, 26), macOS (Node 24), and Windows (Node 24). Each job uses `npm ci`, validates plugin metadata and lockfile consistency, type checks, runs tests, and builds the installable plugin. The Linux / Node 24 job uploads a downloadable `snippet-palette-<commit>` artifact, retained for 14 days.
+Pull requests and `main` run the same reusable checks on Linux (Node 22, 24, 26), macOS 15 Intel (Node 24), and Windows (Node 24). Each job uses `npm ci`, validates plugin metadata and lockfile consistency, type checks, runs tests, and builds the installable plugin. The Linux / Node 24 job uploads a downloadable `snippet-palette-<commit>` artifact, retained for 14 days.
 
 Use Node 22 or newer for local development. `npm run package` creates `artifacts/snippet-palette/` with the plugin files and license.
 
