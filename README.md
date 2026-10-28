@@ -56,6 +56,6 @@ Developed by [Jayden](https://github.com/Jaaayden), based on [Ribbon Snippets by
 
 Pull requests and `main` run the same reusable checks on Linux (Node 22, 24, 26), macOS 15 Intel (Node 24), and Windows (Node 24). Each job uses `npm ci`, validates plugin metadata and lockfile consistency, type checks, runs tests, and builds the installable plugin. The Linux / Node 24 job uploads a downloadable `snippet-palette-<commit>` artifact, retained for 14 days.
 
-Use Node 22 or newer for local development. `npm run package` creates `artifacts/snippet-palette/` with the plugin files and license.
+For local development, use Node 22.22.2+, Node 24.15.0+, or Node 26+ (matching the jsdom test runtime). `npm run package` creates `artifacts/snippet-palette/` with the plugin files and license.
 
 Release tags (`1.0.0` or `v1.0.0`) must match `manifest.json`, `package.json`, the lockfile, and `versions.json`. Tag builds run the full validation matrix before publishing those exact artifacts. Only the publishing job receives write permission. Routine pushes do not create releases.
