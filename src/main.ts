@@ -1,11 +1,12 @@
+import { t } from './i18n';
 import { Editor, MarkdownView, Notice, Plugin, getIcon } from 'obsidian';
-import { RibbonSnippetsSettingTab } from './settings';
+import { SnippetPaletteSettingTab } from './settings';
 import { SnippetsView, SNIPPETS_VIEW_TYPE } from './view';
-import { normalizeSettings, RibbonSnippet, RibbonSnippetsSettings } from './model';
-export type { RibbonSnippet, RibbonSnippetsSettings } from './model';
+import { normalizeSettings, PaletteSnippet, SnippetPaletteSettings } from './model';
+export type { PaletteSnippet, SnippetPaletteSettings } from './model';
 
-export default class RibbonSnippetsPlugin extends Plugin {
-	settings: RibbonSnippetsSettings;
+export default class SnippetPalettePlugin extends Plugin {
+	settings: SnippetPaletteSettings;
 	private ribbonIcons: HTMLElement[] = [];
 	private commandIds: string[] = [];
 	private lastMarkdownView: MarkdownView | null = null;
@@ -14,8 +15,8 @@ export default class RibbonSnippetsPlugin extends Plugin {
 	async onload() {
 		this.settings = normalizeSettings(await this.loadData());
 		this.registerView(SNIPPETS_VIEW_TYPE, leaf => new SnippetsView(leaf, this));
-		this.addRibbonIcon('panels-top-left', '打开片段面板', () => { void this.openPanel(); });
-		this.addCommand({ id: 'open-snippets-panel', name: '打开片段面板', callback: () => this.openPanel() });
+		this.addRibbonIcon('panels-top-left', t('openPanel'), () => { void this.openPanel(); });
+		this.addCommand({ id: 'open-snippets-panel', name: t('openPanel'), callback: () => this.openPanel() });
 		this.registerEvent(this.app.workspace.on('active-leaf-change', leaf => {
 			if (leaf?.view instanceof MarkdownView) this.lastMarkdownView = leaf.view;
 			this.refreshViews();
@@ -23,7 +24,7 @@ export default class RibbonSnippetsPlugin extends Plugin {
 		this.lastMarkdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		this.refreshRibbonIcons();
 		this.refreshCommands();
-		this.addSettingTab(new RibbonSnippetsSettingTab(this.app, this));
+		this.addSettingTab(new SnippetPaletteSettingTab(this.app, this));
 	}
 
 	onunload() {
@@ -42,11 +43,11 @@ export default class RibbonSnippetsPlugin extends Plugin {
 
 	async saveSettings() {
 		// Snapshot and serialize writes so rapid settings changes cannot persist out of order.
-		const snapshot = JSON.parse(JSON.stringify(this.settings)) as RibbonSnippetsSettings;
+		const snapshot = JSON.parse(JSON.stringify(this.settings)) as SnippetPaletteSettings;
 		const write = this.saveQueue.then(() => this.saveData(snapshot));
 		this.saveQueue = write.catch(() => {});
 		try { await write; }
-		catch (error) { new Notice('片段设置保存失败，请重试。'); throw error; }
+		catch (error) { new Notice(t('saveFailed')); throw error; }
 		this.refreshRibbonIcons();
 		this.refreshCommands();
 		this.refreshViews();
@@ -65,11 +66,11 @@ export default class RibbonSnippetsPlugin extends Plugin {
 
 	private refreshRibbonIcons() {
 		this.removeRibbonIcons();
-		if (!this.settings.showRibbonSnippets) return;
+		if (!this.settings.showSnippetPalette) return;
 		for (const snippet of this.settings.snippets) {
 			this.ribbonIcons.push(this.addRibbonIcon(
 				getIcon(snippet.icon) ? snippet.icon : 'file-text',
-				snippet.name || '未命名片段', () => this.insertSnippet(snippet.id)
+				snippet.name || t('unnamed'), () => this.insertSnippet(snippet.id)
 			));
 		}
 	}
@@ -83,7 +84,7 @@ export default class RibbonSnippetsPlugin extends Plugin {
 		this.removeCommands();
 		for (const snippet of this.settings.snippets) {
 			const id = `insert-snippet-${snippet.id}`;
-			this.addCommand({ id, name: `Insert: ${snippet.name || '未命名片段'}`,
+			this.addCommand({ id, name: t('insert', { name: snippet.name || t('unnamed') }),
 				editorCallback: (editor: Editor) => {
 					const current = this.settings.snippets.find(s => s.id === snippet.id);
 					if (current) this.insertSnippetInEditor(editor, current);
@@ -109,19 +110,19 @@ export default class RibbonSnippetsPlugin extends Plugin {
 		if (!snippet) return;
 		const view = this.getTargetView();
 		if (!view?.file || view.getMode() !== 'source') {
-			new Notice('请先打开笔记并切换到编辑模式，再点击片段。');
+			new Notice(t('openEditor'));
 			return;
 		}
 		this.insertSnippetInEditor(view.editor, snippet);
 	}
 
-	private insertSnippetInEditor(editor: Editor, snippet: RibbonSnippet) {
-		if (!snippet.content) { new Notice('这个片段还没有内容，请先编辑。'); return; }
+	private insertSnippetInEditor(editor: Editor, snippet: PaletteSnippet) {
+		if (!snippet.content) { new Notice(t('emptyContent')); return; }
 		const content = editor.getValue();
 		if (snippet.checkDuplicate) {
 			const firstLine = snippet.content.split('\n')[0];
 			if (firstLine && content.includes(firstLine)) {
-				new Notice(`「${snippet.name}」已存在于笔记中`); return;
+				new Notice(t('duplicate', { name: snippet.name })); return;
 			}
 		}
 		const text = snippet.content.endsWith('\n') ? snippet.content : snippet.content + '\n';
@@ -148,7 +149,7 @@ export default class RibbonSnippetsPlugin extends Plugin {
 				break;
 			}
 		}
-		new Notice(`已插入「${snippet.name}」`);
+		new Notice(t('inserted', { name: snippet.name }));
 	}
 
 	generateId(): string {

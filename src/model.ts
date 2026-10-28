@@ -1,6 +1,6 @@
 export const SNIPPET_COLORS = ['auto', 'neutral', 'blue', 'green', 'orange', 'pink', 'purple'] as const;
 export type SnippetColor = typeof SNIPPET_COLORS[number];
-export interface RibbonSnippet {
+export interface PaletteSnippet {
 	id: string;
 	name: string;
 	icon: string;
@@ -9,25 +9,25 @@ export interface RibbonSnippet {
 	checkDuplicate: boolean;
 	color?: SnippetColor;
 }
-export interface RibbonSnippetsSettings {
-	snippets: RibbonSnippet[];
+export interface SnippetPaletteSettings {
+	snippets: PaletteSnippet[];
 	layout: 'wrap' | 'column' | 'row';
 	showIcons: boolean;
-	showRibbonSnippets: boolean;
+	showSnippetPalette: boolean;
 }
-export const DEFAULT_SETTINGS: RibbonSnippetsSettings = {
-	snippets: [], layout: 'wrap', showIcons: false, showRibbonSnippets: false
+export const DEFAULT_SETTINGS: SnippetPaletteSettings = {
+	snippets: [], layout: 'wrap', showIcons: false, showSnippetPalette: false
 };
-export function normalizeSettings(data: Partial<RibbonSnippetsSettings> | null): RibbonSnippetsSettings {
+export function normalizeSettings(data: Partial<SnippetPaletteSettings> | null): SnippetPaletteSettings {
 	return {
 		...DEFAULT_SETTINGS, ...data,
 		snippets: Array.isArray(data?.snippets) ? data.snippets : [],
 		layout: ['wrap', 'column', 'row'].includes(data?.layout ?? '') ? data!.layout! : 'wrap',
 		showIcons: data?.showIcons === true,
-		showRibbonSnippets: data?.showRibbonSnippets === true
+		showSnippetPalette: data?.showSnippetPalette === true
 	};
 }
-export function snippetColor(snippet: RibbonSnippet, index: number): string {
+export function snippetColor(snippet: PaletteSnippet, index: number): string {
 	return snippet.color && snippet.color !== 'auto' && SNIPPET_COLORS.includes(snippet.color)
 		? snippet.color : SNIPPET_COLORS[2 + index % 5];
 }

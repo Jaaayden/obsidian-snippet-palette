@@ -20,44 +20,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Obsidian plugin that lets users define text snippets, each assigned to a ribbon button and command palette entry for one-click insertion into notes. Published as community plugin "Ribbon Snippets" (id: `ribbon-snippets`). Requires Obsidian ≥ 1.7.2 for `removeCommand()` API.
+Snippet Palette is a dockable text-snippet plugin for Obsidian 1.8.7+.
+Plugin ID: `snippet-palette`. Original source: mriechers/obsidian-ribbon-snippets (MIT).
 
-## Build Commands
+## Validation
 
-- `npm run dev` — watch mode (esbuild rebuilds on file changes)
-- `npm run build` — production build (outputs `main.js` at repo root)
-- `./deploy.sh` — builds and copies `main.js`, `manifest.json`, `styles.css` to the local Obsidian vault plugin folder
-
-No test framework is configured. No linter is configured.
+Run `npm run typecheck`, `npm test`, and `npm run build` before delivery.
+Tests simulate Obsidian APIs and DOM; do not claim native UI testing from these alone.
 
 ## Architecture
 
-Two-file plugin in `src/`:
+- `src/main.ts`: plugin lifecycle, serialized persistence, commands, insertion targets.
+- `src/model.ts`: settings, defaults and colors.
+- `src/view.ts`: dockable panel, collapsible search and snippet buttons.
+- `src/settings.ts`: compact management list, editing dialogs and icon picker.
+- `src/i18n.ts`: typed English and Simplified Chinese translations using Obsidian's UI language.
+- `styles.css`: styles scoped under `snippet-palette-`.
 
-**`src/main.ts`** — Plugin class (`RibbonSnippetsPlugin extends Plugin`)
-- Manages the snippet lifecycle: ribbon icons, command palette entries, and text insertion
-- Two save paths: `saveSettings()` (full save + rebuild ribbon/commands) for structural changes vs `debouncedSave()` (persist-only, 400ms debounce) for text field edits to avoid async race conditions in ribbon DOM management
-- Insertion logic handles three positions: top (after YAML frontmatter), cursor, bottom
-- Duplicate detection compares snippet's first line against full note content
-- Dynamic command lifecycle using `addCommand()`/`removeCommand()` — commands are re-registered on every structural settings change
+Use custom single-line rows for the snippet settings list; third-party themes can give standard Setting rows large card backgrounds and padding.
 
-**`src/settings.ts`** — Settings tab UI (`RibbonSnippetsSettingTab extends PluginSettingTab`)
-- Full `display()` re-render on structural changes (add/remove/reorder)
-- Live Lucide icon preview with `setIcon()` wrapped in try/catch for invalid names
-- Snippet actions: reorder (swap in array), delete (splice)
+## Installation
 
-**Data model** — `RibbonSnippet` interface with `id`, `name`, `icon`, `content`, `position`, `checkDuplicate`. Settings stored as `{ snippets: RibbonSnippet[] }`.
-
-## Build System
-
-esbuild bundles `src/main.ts` → `main.js` (CJS format, ES2018 target). All Obsidian/CodeMirror/Electron modules are externalized. The built `main.js` is gitignored.
-
-## Release Process
-
-Push a semver tag (e.g., `1.0.1`) to trigger `.github/workflows/release.yml`, which builds and creates a GitHub release attaching `main.js`, `manifest.json`, and `styles.css`. Update `versions.json` to map plugin version → minimum Obsidian version.
-
-## Key Conventions
-
-- Snippet IDs are generated with `Date.now().toString(36) + random` — not UUIDs
-- The plugin relies on mutating the `settings.snippets` array in place, then calling the appropriate save method
-- CSS classes are prefixed with `ribbon-snippet-` / `ribbon-snippets-` and use Obsidian CSS custom properties for theming
+`./deploy.sh "/path/to/vault"` validates, builds and copies the three plugin artifacts.
+Never commit user `data.json`, vault content or credentials. Preserve the upstream MIT license.

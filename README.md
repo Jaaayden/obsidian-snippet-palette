@@ -1,31 +1,33 @@
-# Ribbon Snippets · Snippet panel fork
+# Snippet Palette
 
-An Obsidian plugin for inserting reusable text from a dockable, searchable panel.
-Based on [mriechers/obsidian-ribbon-snippets](https://github.com/mriechers/obsidian-ribbon-snippets), under the original MIT license.
+A compact, colorful palette for reusable text in Obsidian.
 
-**[中文安装与使用说明](DEVELOPMENT.zh-CN.md)**
+**[简体中文说明](DEVELOPMENT.zh-CN.md)**
 
 ## Features
 
-- Dockable snippet panel: drag its tab into the left sidebar, right sidebar, or another workspace split.
-- Three layouts: compact wrapping labels, a vertical list, or a horizontal scrolling row.
-- Always-visible titles, optional icons (off by default), and per-snippet background colors.
-- Searchable icon picker with previews, populated from the icons supported by the running Obsidian version.
-- Compact settings list with search, reordering, and separate edit dialogs. Changes are applied only on Save.
-- Insert at the cursor, at the top after frontmatter, or at the bottom. Existing snippets retain their settings.
-- Optional duplicate detection and per-snippet command palette entries.
-- Optional legacy ribbon buttons. By default, the ribbon contains only the panel opener.
+- A dockable panel with wrapping labels, a vertical list, or a horizontal scrolling row.
+- Always-visible titles, optional icons, and per-snippet colors.
+- Search hidden by default: click the search icon to expand it; click again or press Escape to close and clear the filter.
+- A compact single-line settings list with color dots, search, reordering, and separate edit dialogs.
+- A searchable icon picker using the icons actually supported by your Obsidian version.
+- Insert at the cursor, after frontmatter, or at the bottom, with optional duplicate detection.
+- English and Simplified Chinese UI following Obsidian's language setting; other languages fall back to English.
 
-## Manual installation
+## Installation
 
-This is a local development fork, not an official upstream release. It retains the `ribbon-snippets` plugin ID to reuse existing configuration.
+Requires Obsidian 1.8.7 or later. Plugin ID: `snippet-palette`.
 
-1. Back up `<vault>/.obsidian/plugins/ribbon-snippets/`, especially `data.json`.
-2. Disable the plugin and copy the built `main.js`, `manifest.json`, and `styles.css` into that directory. Keep `data.json`.
-3. Enable the plugin and click the ribbon's panel opener, or run the **打开片段面板** command.
-4. Open a note in editing mode, then click a snippet title. The panel displays the target note's name.
+1. Build the plugin with the commands below.
+2. Copy `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/snippet-palette/`.
+3. Reload Obsidian and enable **Snippet Palette** under Community plugins.
+4. Click the ribbon opener or run **Snippet Palette: Open snippet panel**.
 
-Settings and panel labels in this fork use Simplified Chinese. Requires Obsidian 1.7.2 or later.
+The panel shows the note it will insert into. Open that note in editing mode, then click a snippet title.
+
+### Migrating from Ribbon Snippets
+
+Back up the old `ribbon-snippets` plugin directory. Copy its `data.json` into the new `snippet-palette` directory and disable the old plugin before enabling Snippet Palette. Existing snippet IDs, titles, content and insertion options are retained. Open the new panel after switching plugins; the old panel has a different view type.
 
 ## Development
 
@@ -36,8 +38,16 @@ npm test
 npm run build
 ```
 
-Tests use a simulated Obsidian API and DOM. Native docking, workspace restore, and mobile touch interaction require manual testing in Obsidian.
+To install into a chosen vault after building:
 
-## License
+```sh
+./deploy.sh "/path/to/vault"
+```
 
-[MIT](LICENSE). Original author: Mark Riechers.
+Tests use simulated Obsidian APIs and a DOM. Native docking, workspace restore, and mobile touch interaction still require testing in Obsidian.
+
+Translations live in `src/i18n.ts`. Translation keys are type checked; tests cover both supported locales and fallback behavior. Obsidian normally reloads when its interface language changes.
+
+## Credits and license
+
+Developed by [Jayden](https://github.com/Jaaayden), based on [Ribbon Snippets by Mark Riechers](https://github.com/mriechers/obsidian-ribbon-snippets). The original MIT copyright notice is preserved in [LICENSE](LICENSE).

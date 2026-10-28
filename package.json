@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-ribbon-snippets",
+  "name": "obsidian-snippet-palette",
   "version": "1.0.0",
-  "description": "Define text blocks and assign each to a ribbon button for one-click insertion",
+  "description": "A colorful, dockable snippet palette for Obsidian",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -15,7 +15,7 @@
     "ribbon",
     "snippets"
   ],
-  "author": "Mark Riechers",
+  "author": "Jayden",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^25.1.0",
@@ -25,5 +25,9 @@
     "obsidian": "latest",
     "tslib": "2.8.1",
     "typescript": "^5.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jaaayden/obsidian-snippet-palette.git"
   }
 }

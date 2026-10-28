@@ -74,15 +74,17 @@ class Setting {
 for (const type of ['Text','TextArea','Dropdown','Toggle','Button','ExtraButton','Search']) {
   Setting.prototype[`add${type}`] = function (fn) { return this.add(type[0].toLowerCase() + type.slice(1), fn); };
 }
-const icons = ['file-text', 'star', 'book-open', 'bookmark', 'check'];
+let language = 'zh';
+const icons = ['file-text', 'star', 'book-open', 'bookmark', 'check', 'search', 'plus'];
 const obsidian = {
   Plugin, MarkdownView, ItemView, Modal, SuggestModal, PluginSettingTab, Setting,
+  getLanguage: () => language,
   Notice: class { constructor(text) { notices.push(text); } },
   getIconIds: () => icons, getIcon: name => icons.includes(name) ? document.createElement('svg') : null,
   setIcon: (el, name) => { if (icons.includes(name)) el.createEl('svg'); }
 };
 const bundled = await build({ stdin: {
-  contents: "export {default as Plugin} from './src/main'; export * from './src/model'; export * from './src/view'; export * from './src/settings';",
+  contents: "export {default as Plugin} from './src/main'; export * from './src/model'; export * from './src/view'; export * from './src/settings'; export * from './src/i18n';",
   resolveDir: process.cwd(), loader: 'ts'
 }, bundle: true, write: false, format: 'cjs', external: ['obsidian'] });
 const module = { exports: {} };
@@ -114,7 +116,7 @@ const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 test('legacy snippets survive migration; defaults are title only and wrapping', () => {
   const old = [snippet()]; const settings = api.normalizeSettings({ snippets: old });
   assert.equal(settings.snippets, old); assert.equal(settings.showIcons, false);
-  assert.equal(settings.layout, 'wrap'); assert.equal(settings.showRibbonSnippets, false);
+  assert.equal(settings.layout, 'wrap'); assert.equal(settings.showSnippetPalette, false);
   assert.equal(api.normalizeSettings({ snippets: null, layout: 'bad' }).snippets.length, 0);
 });
 
@@ -148,14 +150,14 @@ test('panel focus remembers editor, closed notes and reading mode cannot be writ
 test('panel titles remain visible; icon toggle, layouts and search update DOM', async () => {
   const { plugin, app } = fixture();
   const panel = new api.SnippetsView({ app }, plugin); await panel.onOpen();
-  assert.equal(panel.contentEl.querySelector('.ribbon-snippets-chip').textContent, '示例');
-  assert.equal(panel.contentEl.querySelectorAll('svg').length, 0);
+  assert.equal(panel.contentEl.querySelector('.snippet-palette-chip').textContent, '示例');
+  assert.equal(panel.contentEl.querySelectorAll('.snippet-palette-chip svg').length, 0);
   plugin.settings.showIcons = true; plugin.settings.layout = 'column'; panel.render();
-  assert.equal(panel.contentEl.querySelectorAll('svg').length, 1);
-  assert.ok(panel.contentEl.querySelector('.ribbon-snippets-layout-column'));
-  plugin.settings.layout = 'row'; panel.render(); assert.ok(panel.contentEl.querySelector('.ribbon-snippets-layout-row'));
+  assert.equal(panel.contentEl.querySelectorAll('.snippet-palette-chip svg').length, 1);
+  assert.ok(panel.contentEl.querySelector('.snippet-palette-layout-column'));
+  plugin.settings.layout = 'row'; panel.render(); assert.ok(panel.contentEl.querySelector('.snippet-palette-layout-row'));
   const search = panel.contentEl.querySelector('input'); search.value = 'no match'; search.dispatchEvent(new dom.window.Event('input'));
-  assert.equal(panel.contentEl.querySelectorAll('.ribbon-snippets-chip').length, 0);
+  assert.equal(panel.contentEl.querySelectorAll('.snippet-palette-chip').length, 0);
 });
 
 test('icon picker searches only available icons and renders previews', () => {
@@ -169,8 +171,8 @@ test('icon picker searches only available icons and renders previews', () => {
 
 test('settings is a compact list; canceled draft does not change saved data', () => {
   const { plugin, app } = fixture([snippet(), snippet({ id: 'two', name: '第二条' })]);
-  const tab = new api.RibbonSnippetsSettingTab(app, plugin); tab.display();
-  assert.equal(tab.containerEl.querySelectorAll('.ribbon-snippets-setting-row').length, 2);
+  const tab = new api.SnippetPaletteSettingTab(app, plugin); tab.display();
+  assert.equal(tab.containerEl.querySelectorAll('.snippet-palette-setting-row').length, 2);
   assert.equal(tab.containerEl.querySelectorAll('textarea').length, 0);
   const modal = new api.SnippetEditorModal(app, plugin, plugin.settings.snippets[0], () => {}); modal.open();
   const input = modal.contentEl.querySelector('input'); input.value = 'Changed'; input.dispatchEvent(new dom.window.Event('input'));
@@ -183,7 +185,7 @@ test('saving a draft adds exactly one snippet and refreshes command title', asyn
   const input = modal.contentEl.querySelector('input'); input.value = 'New title'; input.dispatchEvent(new dom.window.Event('input'));
   Array.from(modal.contentEl.querySelectorAll('button')).find(el => el.textContent === '保存').click(); await tick();
   assert.equal(plugin.settings.snippets.length, 1); assert.equal(plugin.saved.snippets[0].name, 'New title');
-  assert.equal([...plugin.commands.values()][0].name, 'Insert: New title'); assert.equal(modal.closed, true);
+  assert.equal([...plugin.commands.values()][0].name, '插入：New title'); assert.equal(modal.closed, true);
 });
 
 test('failed save keeps edit modal open and restores previous snippets', async () => {
@@ -212,7 +214,7 @@ test('opening the panel reuses existing leaf instead of duplicating it', async (
 
 test('panel mouse click preserves focus and inserts into selected note', async () => {
   const { plugin, view, app } = fixture(); const panel = new api.SnippetsView({ app }, plugin); await panel.onOpen();
-  const button = panel.contentEl.querySelector('.ribbon-snippets-chip');
+  const button = panel.contentEl.querySelector('.snippet-palette-chip');
   const event = new dom.window.MouseEvent('mousedown', { button: 0, cancelable: true });
   button.dispatchEvent(event); assert.equal(event.defaultPrevented, true);
   button.click(); assert.equal(view.editor.getValue(), 'aHello\nc');
@@ -220,7 +222,7 @@ test('panel mouse click preserves focus and inserts into selected note', async (
 
 test('reorder and confirmed deletion update the saved compact list', async () => {
   const { plugin, app } = fixture([snippet(), snippet({ id: 'two', name: '第二条' })]);
-  const tab = new api.RibbonSnippetsSettingTab(app, plugin); tab.display();
+  const tab = new api.SnippetPaletteSettingTab(app, plugin); tab.display();
   tab.containerEl.querySelector('button[title="下移"]').click(); await tick();
   assert.equal(plugin.saved.snippets[0].id, 'two');
   tab.containerEl.querySelector('button[title="删除"]').click();
@@ -228,4 +230,55 @@ test('reorder and confirmed deletion update the saved compact list', async () =>
   const modal = Modal.opened.at(-1);
   Array.from(modal.contentEl.querySelectorAll('button')).find(el => el.textContent === '删除').click(); await tick();
   assert.equal(plugin.saved.snippets.length, 1); assert.equal(plugin.saved.snippets[0].id, 'one');
+});
+
+test('panel search is hidden until toggled; closing clears filtering', async () => {
+  const { plugin, app } = fixture(); const panel = new api.SnippetsView({ app }, plugin); await panel.onOpen();
+  document.body.append(panel.contentEl);
+  const toolbar = panel.contentEl.querySelector('.snippet-palette-toolbar');
+  const toggle = panel.contentEl.querySelector('button[aria-expanded]');
+  const input = toolbar.querySelector('input');
+  assert.equal(toolbar.hidden, true);
+  toggle.click(); assert.equal(toolbar.hidden, false); assert.equal(document.activeElement, input);
+  input.value = 'no match'; input.dispatchEvent(new dom.window.Event('input'));
+  assert.equal(panel.contentEl.querySelectorAll('.snippet-palette-chip').length, 0);
+  input.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert.equal(toolbar.hidden, true); assert.equal(input.value, ''); assert.equal(document.activeElement, toggle);
+  assert.equal(panel.contentEl.querySelectorAll('.snippet-palette-chip').length, 1);
+  toggle.click(); toggle.click(); assert.equal(toolbar.hidden, true);
+  panel.contentEl.remove();
+});
+
+test('settings list uses independent single-line rows without content previews', () => {
+  const { plugin, app } = fixture([snippet({ content: 'Private body not shown in list' })]);
+  const tab = new api.SnippetPaletteSettingTab(app, plugin); tab.display();
+  const row = tab.containerEl.querySelector('.snippet-palette-setting-row');
+  assert.equal(row.classList.contains('setting-item'), false);
+  assert.equal(row.querySelector('.snippet-palette-row-title').textContent, '示例');
+  assert.equal(row.textContent.includes('Private body'), false);
+  assert.equal(row.querySelectorAll('.snippet-palette-tool').length, 4);
+  assert.ok(tab.containerEl.querySelector('.snippet-palette-manage-toolbar input[type=search]'));
+});
+
+test('translations support simplified Chinese variants and English fallback with interpolation', () => {
+  for (const code of ['zh', 'zh-CN', 'zh_Hans', 'zh-SG']) assert.equal(api.translate(code, 'save'), '保存');
+  for (const code of ['en', 'de', 'fr', 'zh-TW']) assert.equal(api.translate(code, 'save'), 'Save');
+  assert.equal(api.translate('en', 'target', { name: '<Note>' }), 'Insert into: <Note>');
+  assert.deepEqual(Object.keys(api.en).sort(), Object.keys(api.zh).sort());
+});
+
+test('English locale covers settings, modal, panel, command and notices', async () => {
+  language = 'en';
+  try {
+    const { plugin, app } = fixture();
+    const tab = new api.SnippetPaletteSettingTab(app, plugin); tab.display();
+    assert.ok(tab.containerEl.textContent.includes('Show icons'));
+    const modal = new api.SnippetEditorModal(app, plugin, null, () => {}); modal.open();
+    assert.equal(modal.title, 'New snippet'); assert.ok(modal.contentEl.textContent.includes('Cancel'));
+    const panel = new api.SnippetsView({ app }, plugin); await panel.onOpen();
+    assert.equal(panel.getDisplayText(), 'Snippet Palette');
+    assert.equal(panel.contentEl.querySelector('input').placeholder, 'Search by title…');
+    await plugin.saveSettings(); assert.equal(plugin.commands.get('insert-snippet-one').name, 'Insert: 示例');
+    plugin.insertSnippet('one'); assert.equal(notices.at(-1), 'Inserted “示例”');
+  } finally { language = 'zh'; }
 });

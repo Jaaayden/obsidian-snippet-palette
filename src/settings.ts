@@ -1,15 +1,16 @@
+import { t } from './i18n';
 import { App, Modal, Notice, PluginSettingTab, Setting, SuggestModal, getIconIds, getIcon, setIcon } from 'obsidian';
-import type RibbonSnippetsPlugin from './main';
-import { RibbonSnippet, SNIPPET_COLORS, SnippetColor, snippetColor } from './model';
+import type SnippetPalettePlugin from './main';
+import { PaletteSnippet, SNIPPET_COLORS, SnippetColor, snippetColor } from './model';
 
-const COLOR_NAMES = ['自动配色', '中性', '蓝色', '绿色', '橙色', '粉色', '紫色'];
+
 
 export class IconPickerModal extends SuggestModal<string> {
 	private icons = getIconIds();
 	constructor(app: App, private select: (icon: string) => void) {
 		super(app);
-		this.setPlaceholder('搜索图标名称，如 star、book、check…');
-		this.setInstructions([{ command: '↑ ↓', purpose: '选择' }, { command: '↵', purpose: '确认' }, { command: 'esc', purpose: '取消' }]);
+		this.setPlaceholder(t('iconSearch'));
+		this.setInstructions([{ command: '↑ ↓', purpose: t('select') }, { command: '↵', purpose: t('confirm') }, { command: 'esc', purpose: t('cancel') }]);
 		this.limit = 60;
 	}
 	getSuggestions(query: string): string[] {
@@ -17,16 +18,16 @@ export class IconPickerModal extends SuggestModal<string> {
 		return this.icons.filter(icon => terms.every(term => icon.toLowerCase().includes(term))).slice(0, 60);
 	}
 	renderSuggestion(icon: string, el: HTMLElement) {
-		el.addClass('ribbon-snippets-icon-option');
-		setIcon(el.createSpan({ cls: 'ribbon-snippets-icon' }), icon);
+		el.addClass('snippet-palette-icon-option');
+		setIcon(el.createSpan({ cls: 'snippet-palette-icon' }), icon);
 		el.createSpan({ text: icon });
 	}
 	onChooseSuggestion(icon: string) { this.select(icon); }
 }
 
 export class SnippetEditorModal extends Modal {
-	private draft: RibbonSnippet;
-	constructor(app: App, private plugin: RibbonSnippetsPlugin, private original: RibbonSnippet | null, private onSaved: () => void) {
+	private draft: PaletteSnippet;
+	constructor(app: App, private plugin: SnippetPalettePlugin, private original: PaletteSnippet | null, private onSaved: () => void) {
 		super(app);
 		this.draft = original ? { ...original } : {
 			id: plugin.generateId(), name: '', icon: 'file-text', content: '',
@@ -35,38 +36,38 @@ export class SnippetEditorModal extends Modal {
 	}
 	onOpen() {
 		const { contentEl } = this;
-		contentEl.addClass('ribbon-snippets-editor');
-		this.setTitle(this.original ? '编辑片段' : '新建片段');
-		new Setting(contentEl).setName('标题').setDesc('直接显示在片段面板中')
-			.addText(text => text.setPlaceholder('例如：文献笔记').setValue(this.draft.name).onChange(value => { this.draft.name = value; }));
-		const iconSetting = new Setting(contentEl).setName('图标').setDesc('从当前 Obsidian 支持的图标中选择；面板是否显示图标由全局开关控制。');
-		const preview = iconSetting.controlEl.createSpan({ cls: 'ribbon-snippets-icon' });
+		contentEl.addClass('snippet-palette-editor');
+		this.setTitle(this.original ? t('editSnippet') : t('newSnippet'));
+		new Setting(contentEl).setName(t('title')).setDesc(t('titleDesc'))
+			.addText(text => text.setPlaceholder(t('titlePlaceholder')).setValue(this.draft.name).onChange(value => { this.draft.name = value; }));
+		const iconSetting = new Setting(contentEl).setName(t('icon')).setDesc(t('iconDesc'));
+		const preview = iconSetting.controlEl.createSpan({ cls: 'snippet-palette-icon' });
 		const updatePreview = () => {
 			preview.empty();
 			setIcon(preview, getIcon(this.draft.icon) ? this.draft.icon : 'file-text');
 		};
 		updatePreview();
-		iconSetting.addButton(button => button.setButtonText('搜索选择…').onClick(() => {
+		iconSetting.addButton(button => button.setButtonText(t('chooseIcon')).onClick(() => {
 			new IconPickerModal(this.app, icon => { this.draft.icon = icon; updatePreview(); }).open();
 		}));
-		new Setting(contentEl).setName('底色').addDropdown(dropdown => {
-			SNIPPET_COLORS.forEach((color, index) => dropdown.addOption(color, COLOR_NAMES[index]));
+		new Setting(contentEl).setName(t('color')).addDropdown(dropdown => {
+			SNIPPET_COLORS.forEach(color => dropdown.addOption(color, t(color)));
 			dropdown.setValue(this.draft.color ?? 'auto').onChange(value => { this.draft.color = value as SnippetColor; });
 		});
-		new Setting(contentEl).setName('插入位置').addDropdown(dropdown => dropdown
-			.addOption('cursor', '光标位置（替换选中文字）').addOption('top', '笔记开头（属性之后）').addOption('bottom', '笔记末尾')
-			.setValue(this.draft.position).onChange(value => { this.draft.position = value as RibbonSnippet['position']; }));
-		new Setting(contentEl).setName('防止重复').setDesc('如果笔记已经包含片段的第一行，则跳过插入。')
+		new Setting(contentEl).setName(t('position')).addDropdown(dropdown => dropdown
+			.addOption('cursor', t('cursor')).addOption('top', t('top')).addOption('bottom', t('bottom'))
+			.setValue(this.draft.position).onChange(value => { this.draft.position = value as PaletteSnippet['position']; }));
+		new Setting(contentEl).setName(t('preventDuplicates')).setDesc(t('duplicateDesc'))
 			.addToggle(toggle => toggle.setValue(this.draft.checkDuplicate).onChange(value => { this.draft.checkDuplicate = value; }));
-		new Setting(contentEl).setName('内容').setDesc('支持 Markdown 和代码块').setClass('ribbon-snippets-content-setting')
+		new Setting(contentEl).setName(t('content')).setDesc(t('contentDesc')).setClass('snippet-palette-content-setting')
 			.addTextArea(text => {
-				text.setValue(this.draft.content).setPlaceholder('输入要插入的内容…').onChange(value => { this.draft.content = value; });
+				text.setValue(this.draft.content).setPlaceholder(t('contentPlaceholder')).onChange(value => { this.draft.content = value; });
 				text.inputEl.rows = 10;
-				text.inputEl.addClass('ribbon-snippet-textarea');
+				text.inputEl.addClass('snippet-palette-textarea');
 			});
-		new Setting(contentEl).addButton(button => button.setButtonText('取消').onClick(() => this.close()))
-			.addButton(button => button.setButtonText('保存').setCta().onClick(async () => {
-				if (!this.draft.name.trim()) { new Notice('请输入片段标题。'); return; }
+		new Setting(contentEl).addButton(button => button.setButtonText(t('cancel')).onClick(() => this.close()))
+			.addButton(button => button.setButtonText(t('save')).setCta().onClick(async () => {
+				if (!this.draft.name.trim()) { new Notice(t('titleRequired')); return; }
 				button.setDisabled(true);
 				const previous = this.plugin.settings.snippets;
 				const saved = { ...this.draft, name: this.draft.name.trim() };
@@ -86,44 +87,48 @@ export class SnippetEditorModal extends Modal {
 }
 
 class DeleteSnippetModal extends Modal {
-	constructor(app: App, private snippet: RibbonSnippet, private remove: () => Promise<void>) { super(app); }
+	constructor(app: App, private snippet: PaletteSnippet, private remove: () => Promise<void>) { super(app); }
 	onOpen() {
-		this.setTitle('删除片段');
-		this.contentEl.createEl('p', { text: `确定删除「${this.snippet.name}」及其内容吗？` });
-		new Setting(this.contentEl).addButton(button => button.setButtonText('取消').onClick(() => this.close()))
-			.addButton(button => button.setButtonText('删除').setWarning().onClick(async () => {
+		this.setTitle(t('deleteSnippet'));
+		this.contentEl.createEl('p', { text: t('deleteConfirm', { name: this.snippet.name }) });
+		new Setting(this.contentEl).addButton(button => button.setButtonText(t('cancel')).onClick(() => this.close()))
+			.addButton(button => button.setButtonText(t('delete')).setWarning().onClick(async () => {
 				button.setDisabled(true);
 				try { await this.remove(); this.close(); } catch { button.setDisabled(false); }
 			}));
 	}
 }
 
-export class RibbonSnippetsSettingTab extends PluginSettingTab {
-	constructor(app: App, private plugin: RibbonSnippetsPlugin) { super(app, plugin); }
+export class SnippetPaletteSettingTab extends PluginSettingTab {
+	constructor(app: App, private plugin: SnippetPalettePlugin) { super(app, plugin); }
 	display() {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.addClass('ribbon-snippets-settings');
-		containerEl.createEl('h2', { text: 'Ribbon Snippets · 片段面板' });
-		new Setting(containerEl).setName('独立片段面板').setDesc('像文件列表一样拖动面板标签，即可放到左侧、右侧或其他分栏。')
-			.addButton(button => button.setButtonText('打开面板').onClick(() => this.plugin.openPanel()));
-		new Setting(containerEl).setName('布局').addDropdown(dropdown => dropdown
-			.addOption('wrap', '紧凑标签 · 自动换行').addOption('column', '单列列表').addOption('row', '单行 · 横向滚动')
+		containerEl.addClass('snippet-palette-settings');
+		containerEl.createEl('h2', { text: t('settingsTitle') });
+		new Setting(containerEl).setName(t('panel')).setDesc(t('panelDesc'))
+			.addButton(button => button.setButtonText(t('open')).onClick(() => this.plugin.openPanel()));
+		new Setting(containerEl).setName(t('layout')).addDropdown(dropdown => dropdown
+			.addOption('wrap', t('wrap')).addOption('column', t('column')).addOption('row', t('row'))
 			.setValue(this.plugin.settings.layout).onChange(async value => {
 				this.plugin.settings.layout = value as typeof this.plugin.settings.layout;
 				await this.plugin.saveSettings();
 			}));
-		new Setting(containerEl).setName('显示图标').setDesc('关闭时只显示标题，开启时显示图标和标题。')
+		new Setting(containerEl).setName(t('showIcons')).setDesc(t('showIconsDesc'))
 			.addToggle(toggle => toggle.setValue(this.plugin.settings.showIcons).onChange(async value => {
 				this.plugin.settings.showIcons = value; await this.plugin.saveSettings();
 			}));
-		new Setting(containerEl).setName('保留每个片段的左侧快捷图标').setDesc('默认关闭；左侧只保留一个打开面板的入口。')
-			.addToggle(toggle => toggle.setValue(this.plugin.settings.showRibbonSnippets).onChange(async value => {
-				this.plugin.settings.showRibbonSnippets = value; await this.plugin.saveSettings();
+		new Setting(containerEl).setName(t('legacyRibbon')).setDesc(t('legacyRibbonDesc'))
+			.addToggle(toggle => toggle.setValue(this.plugin.settings.showSnippetPalette).onChange(async value => {
+				this.plugin.settings.showSnippetPalette = value; await this.plugin.saveSettings();
 			}));
-		new Setting(containerEl).setName('片段列表').addButton(button => button.setButtonText('新建片段').setCta()
-			.onClick(() => new SnippetEditorModal(this.app, this.plugin, null, () => this.display()).open()));
-		const list = containerEl.createDiv();
+		const toolbar = containerEl.createDiv({ cls: 'snippet-palette-manage-toolbar' });
+		toolbar.createEl('h3', { text: t('snippetList') });
+		const search = toolbar.createEl('input', { type: 'search', placeholder: t('searchPlaceholder') });
+		search.setAttribute('aria-label', t('search'));
+		const add = toolbar.createEl('button', { text: t('newSnippet'), cls: 'mod-cta' });
+		add.addEventListener('click', () => new SnippetEditorModal(this.app, this.plugin, null, () => this.display()).open());
+		const list = containerEl.createDiv({ cls: 'snippet-palette-settings-list' });
 		const renderList = (query: string) => {
 			list.empty();
 			const snippets = this.plugin.settings.snippets;
@@ -131,36 +136,44 @@ export class RibbonSnippetsSettingTab extends PluginSettingTab {
 			snippets.forEach((snippet, index) => {
 				if (!snippet.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) return;
 				count++;
-				const row = new Setting(list).setClass('ribbon-snippets-setting-row');
-				const title = row.nameEl.createEl('button', {
-					text: snippet.name || '未命名片段',
-					cls: `ribbon-snippets-chip ribbon-snippets-color-${snippetColor(snippet, index)}`
+				// Custom rows avoid themes turning each Setting into a spacious card.
+				const row = list.createDiv({ cls: 'snippet-palette-setting-row' });
+				const title = row.createEl('button', {
+					text: snippet.name || t('unnamed'),
+					cls: `snippet-palette-row-title snippet-palette-color-${snippetColor(snippet, index)}`
 				});
+				title.title = snippet.name || t('unnamed');
 				title.addEventListener('click', () => new SnippetEditorModal(this.app, this.plugin, snippet, () => this.display()).open());
-				row.setDesc(snippet.content.split('\n')[0].slice(0, 80) || '暂无内容');
-				for (const [offset, icon, label] of [[-1, 'arrow-up', '上移'], [1, 'arrow-down', '下移']] as const) {
-					row.addExtraButton(button => button.setIcon(icon).setTooltip(label).setDisabled(index + offset < 0 || index + offset >= snippets.length)
-						.onClick(async () => {
-							[snippets[index], snippets[index + offset]] = [snippets[index + offset], snippets[index]];
-							await this.plugin.saveSettings(); renderList(query);
-						}));
+				const actions = row.createDiv({ cls: 'snippet-palette-row-actions' });
+				const action = (icon: string, label: string, disabled: boolean, callback: () => void) => {
+					const button = actions.createEl('button', { cls: 'snippet-palette-tool' });
+					setIcon(button, icon);
+					button.title = label;
+					button.setAttribute('aria-label', label);
+					button.disabled = disabled;
+					button.addEventListener('click', callback);
+				};
+				for (const [offset, icon, label] of [[-1, 'arrow-up', t('moveUp')], [1, 'arrow-down', t('moveDown')]] as const) {
+					action(icon, label, index + offset < 0 || index + offset >= snippets.length, async () => {
+						[snippets[index], snippets[index + offset]] = [snippets[index + offset], snippets[index]];
+						await this.plugin.saveSettings(); renderList(query);
+					});
 				}
-				row.addExtraButton(button => button.setIcon('pencil').setTooltip('编辑').onClick(() => {
+				action('pencil', t('edit'), false, () => {
 					new SnippetEditorModal(this.app, this.plugin, snippet, () => this.display()).open();
-				}));
-				row.addExtraButton(button => button.setIcon('trash-2').setTooltip('删除').onClick(() => {
+				});
+				action('trash-2', t('delete'), false, () => {
 					new DeleteSnippetModal(this.app, snippet, async () => {
 						const previous = this.plugin.settings.snippets;
 						this.plugin.settings.snippets = previous.filter(item => item.id !== snippet.id);
 						try { await this.plugin.saveSettings(); renderList(query); }
 						catch (error) { this.plugin.settings.snippets = previous; throw error; }
 					}).open();
-				}));
+				});
 			});
-			if (!count) list.createEl('p', { text: query ? '没有匹配的片段' : '点击「新建片段」添加第一条片段。', cls: 'ribbon-snippets-empty' });
+			if (!count) list.createEl('p', { text: query ? t('noMatches') : t('emptyList'), cls: 'snippet-palette-empty' });
 		};
-		const search = new Setting(containerEl).setName('搜索片段').addSearch(input => input.setPlaceholder('按标题搜索…').onChange(renderList));
-		containerEl.insertBefore(search.settingEl, list);
+		search.addEventListener('input', () => renderList(search.value));
 		renderList('');
 	}
 }

@@ -1,10 +1,10 @@
 {
-  "id": "ribbon-snippets",
-  "name": "Ribbon Snippets",
+  "id": "snippet-palette",
+  "name": "Snippet Palette",
   "version": "1.0.0",
-  "minAppVersion": "1.7.2",
-  "description": "Define text blocks and assign each to a ribbon button for one-click insertion",
-  "author": "Mark Riechers",
-  "authorUrl": "https://github.com/markonfire",
+  "minAppVersion": "1.8.7",
+  "description": "A colorful, dockable palette for inserting and managing reusable text snippets.",
+  "author": "Jayden",
+  "authorUrl": "https://github.com/Jaaayden",
   "isDesktopOnly": false
 }
