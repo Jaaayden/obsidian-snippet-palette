@@ -5,3 +5,8 @@ main.js
 
 # Non-Claude agent worktrees (created per CLAUDE.md isolation rules)
 .worktrees/
+
+# Generated installable plugin bundle
+artifacts/
+# Local Obsidian configuration must never be committed
+data.json
