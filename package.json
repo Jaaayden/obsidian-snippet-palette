@@ -7,7 +7,9 @@
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
     "typecheck": "tsc --noEmit --skipLibCheck",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "validate": "node scripts/validate.mjs",
+    "package": "npm run build && node scripts/package.mjs"
   },
   "keywords": [
     "obsidian",
@@ -18,16 +20,19 @@
   "author": "Jayden",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^25.1.0",
-    "builtin-modules": "^5.0.0",
-    "esbuild": "0.27.2",
+    "@types/node": "^26.6.5",
+    "builtin-modules": "^5.4.0",
+    "esbuild": "0.28.2",
     "jsdom": "^26.1.0",
     "obsidian": "latest",
     "tslib": "2.8.1",
-    "typescript": "^5.3.0"
+    "typescript": "^7.0.2"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/Jaaayden/obsidian-snippet-palette.git"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

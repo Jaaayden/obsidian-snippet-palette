@@ -7,8 +7,8 @@ export const SNIPPETS_VIEW_TYPE = 'snippet-palette-panel';
 
 export class SnippetsView extends ItemView {
 	private query = '';
-	private listEl: HTMLElement;
-	private targetEl: HTMLElement;
+	private listEl!: HTMLElement;
+	private targetEl!: HTMLElement;
 	constructor(leaf: WorkspaceLeaf, private plugin: SnippetPalettePlugin) { super(leaf); }
 	getViewType() { return SNIPPETS_VIEW_TYPE; }
 	getDisplayText() { return t('viewTitle'); }

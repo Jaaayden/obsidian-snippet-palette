@@ -35,3 +35,9 @@ npm run build
 ```
 
 自动化测试覆盖配置迁移、插入逻辑、图标开关、紧凑列表、搜索展开与收起、中英文翻译和保存失败处理。测试使用模拟 Obsidian API 和 DOM；真实 Obsidian 的停靠、工作区恢复及移动端交互需要另外验收。
+
+## CI 与发布
+
+开发环境要求 Node 22 或更高版本。PR 和 main 使用同一套检查：Linux 上 Node 22/24/26，macOS 15 Intel、Windows 上 Node 24；验证元数据、锁文件、类型、测试和构建。Linux / Node 24 上传可下载的插件安装产物，保留 14 天。`npm run package` 在本地生成 `artifacts/snippet-palette/`。
+
+只有推送版本标签才会发布 Release。标签必须与 manifest、package、锁文件以及 versions.json 中的版本一致，并通过完整 CI；发布任务直接使用已验证的产物。普通提交不触发发布。

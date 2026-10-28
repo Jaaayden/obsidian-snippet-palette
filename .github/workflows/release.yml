@@ -1,33 +1,39 @@
-name: Release Obsidian Plugin
-
+name: Release Snippet Palette
 on:
   push:
     tags:
-      - "*.*.*"
-
+      - '[0-9]*.[0-9]*.[0-9]*'
+      - 'v[0-9]*.[0-9]*.[0-9]*'
 permissions:
-  contents: write
-
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  build:
+  validate:
+    uses: ./.github/workflows/checks.yml
+    with:
+      release-tag: ${{ github.ref_name }}
+  publish:
+    needs: validate
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v6
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          node-version: 20
-
-      - run: npm install
-
-      - run: npm run build
-
-      - name: Create release
+          name: snippet-palette-${{ github.sha }}
+          path: artifacts
+      - name: Publish validated artifacts
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          tag="${GITHUB_REF#refs/tags/}"
-          gh release create "$tag" \
-            --title "v$tag" \
+          gh release create "$RELEASE_TAG" --verify-tag \
+            --title "Snippet Palette ${RELEASE_TAG#v}" \
             --generate-notes \
-            main.js manifest.json styles.css
+            artifacts/snippet-palette/main.js \
+            artifacts/snippet-palette/manifest.json \
+            artifacts/snippet-palette/styles.css

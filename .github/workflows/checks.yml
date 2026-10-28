@@ -1,0 +1,51 @@
+name: Shared validation
+on:
+  workflow_call:
+    inputs:
+      release-tag:
+        type: string
+        default: ''
+permissions:
+  contents: read
+jobs:
+  test:
+    name: ${{ matrix.os }} / Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, node: 22}
+          - {os: ubuntu-latest, node: 24}
+          - {os: ubuntu-latest, node: 26}
+          - {os: macos-15-intel, node: 24}
+          - {os: windows-latest, node: 24}
+    env:
+      RELEASE_TAG: ${{ inputs.release-tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Verify plugin metadata
+        run: npm run validate
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Type check
+        run: npm run typecheck
+      - name: Test
+        run: npm test
+      - name: Build installable plugin
+        run: npm run package
+      - name: Upload installable plugin
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 24
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: snippet-palette-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

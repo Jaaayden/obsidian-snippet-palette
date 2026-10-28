@@ -51,3 +51,11 @@ Translations live in `src/i18n.ts`. Translation keys are type checked; tests cov
 ## Credits and license
 
 Developed by [Jayden](https://github.com/Jaaayden), based on [Ribbon Snippets by Mark Riechers](https://github.com/mriechers/obsidian-ribbon-snippets). The original MIT copyright notice is preserved in [LICENSE](LICENSE).
+
+## Continuous integration
+
+Pull requests and `main` run the same reusable checks on Linux (Node 22, 24, 26), macOS 15 Intel (Node 24), and Windows (Node 24). Each job uses `npm ci`, validates plugin metadata and lockfile consistency, type checks, runs tests, and builds the installable plugin. The Linux / Node 24 job uploads a downloadable `snippet-palette-<commit>` artifact, retained for 14 days.
+
+Use Node 22 or newer for local development. `npm run package` creates `artifacts/snippet-palette/` with the plugin files and license.
+
+Release tags (`1.0.0` or `v1.0.0`) must match `manifest.json`, `package.json`, the lockfile, and `versions.json`. Tag builds run the full validation matrix before publishing those exact artifacts. Only the publishing job receives write permission. Routine pushes do not create releases.

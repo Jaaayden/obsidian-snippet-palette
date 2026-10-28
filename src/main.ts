@@ -6,7 +6,7 @@ import { normalizeSettings, PaletteSnippet, SnippetPaletteSettings } from './mod
 export type { PaletteSnippet, SnippetPaletteSettings } from './model';
 
 export default class SnippetPalettePlugin extends Plugin {
-	settings: SnippetPaletteSettings;
+	settings: SnippetPaletteSettings = normalizeSettings(null);
 	private ribbonIcons: HTMLElement[] = [];
 	private commandIds: string[] = [];
 	private lastMarkdownView: MarkdownView | null = null;
